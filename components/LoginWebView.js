@@ -10,15 +10,11 @@ const LOGIN_PAGE = 'https://oas.fh-erfurt.de/IDM/jsps/login/Login.jsf'
 const neighborEl = [...document.querySelectorAll('td')].find(el => el.textContent === 'Primary Role DN:')
 const url = neighborEl.nextElementSibling.querySelector('a').href // javascript:code type url
 */
-const INFO_PAGE = 'https://oas.fh-erfurt.de/IDM/portal/portlet/Selbstauskunft?urlType=Render&novl-regid=Selbstauskunft&novl-inst=IDM.Selbstauskunft&wsrp-mode=view&wsrp-windowstate=normal&MODE=MODE_VIEW&ENTITY_DEFINITION=organizationalRole&value-position=0&CN=cn%3Db80adac4-6ca8-4d72-9964-433322c128cd%2Cou%3Drole%2Co%3Duni'
+// const INFO_PAGE = 'https://oas.fh-erfurt.de/IDM/portal/portlet/Selbstauskunft?urlType=Render&novl-regid=Selbstauskunft&novl-inst=IDM.Selbstauskunft&wsrp-mode=view&wsrp-windowstate=normal&MODE=MODE_VIEW&ENTITY_DEFINITION=organizationalRole&value-position=0&CN=cn%3Db80adac4-6ca8-4d72-9964-433322c128cd%2Cou%3Drole%2Co%3Duni'
 
 // URL after successful login:
 // https://oas.fh-erfurt.de/IDM/portal/cn/DefaultContainerPage/SelfService
 const LOGIN_PROOF_STRING = 'IDM/portal'
-
-// URL after successful redirect to info page:
-// https://oas.fh-erfurt.de/IDM/portal/portlet/Selbstauskunft?novl-inst=IDM.Selbstauskunft
-const INFO_PAGE_PROOF_STRING = 'IDM.Selbstauskunft'
 
 // Remote fetching would make this more flexible for possible changes
 // Kept backwards compatible for older webview implementations
@@ -30,80 +26,44 @@ const JS_SNIPPETS = {
       data: document.cookie
       })
     )
-  `,
-  PARSE_INFO: `
-    var info = []
-    for (let key in defObj.map.a.map) {
-      var value = entObj.map.a.map[key].map.v[0]
-      if (value) {
-        info.push({
-          key: key,
-          value: value,
-          name: defObj.map.a.map[key].map.l
-        })
-      }
-    }
-    window.ReactNativeWebView.postMessage(
-      JSON.stringify({
-        type: "info",
-        data: info
-      })
-    )
   `
 }
 
 export default function LoginWebView (props) {
-  // const { width, height } = useDimensions().window
-  const [loggedIn, setLoggedIn] = useState(false)
-
+  const [cookieSent, setCookieSent] = useState(false)
   const webview = useRef(null)
 
   // Generator to make snippets easier to write
   const generateFn = (functionBody) => `(function () { ${functionBody} }());`
   // JS inject
   const evalWebView = (js) => webview.current.injectJavaScript(generateFn(js))
-  // Redirect webview
-  const redirect = (url) => {
-    webview.current.injectJavaScript(`window.location = "${url}"`)
-  }
 
   const onNavigationStateChange = navigationState => {
     const { url, loading } = navigationState
     // NavigationState changes on start AND end of navigation
     if (!url || loading) return
 
-    // console.log('URL: ', url)
+    console.log('[LoginWebView] URL: ', url)
 
-    if (loggedIn) {
-      // Check if info page
-      if (url.includes(INFO_PAGE_PROOF_STRING)) {
-        // On info page
-        // Parse info
-        evalWebView(JS_SNIPPETS.PARSE_INFO)
-      }
-    } else {
-      // Check if logged in
-      if (url.includes(LOGIN_PROOF_STRING)) {
-        // Login successful
-        // Post cookie message
-        evalWebView(JS_SNIPPETS.CHECK_COOKIE)
-      }
+    // Check if logged in
+    if (url.includes(LOGIN_PROOF_STRING)) {
+      // Login successful
+      // Post cookie message
+      evalWebView(JS_SNIPPETS.CHECK_COOKIE)
     }
   }
 
   const onMessage = event => {
+    if (cookieSent) { return }
     const message = JSON.parse(event.nativeEvent.data)
     if (message.type === 'cookie') {
       // Got cookies, not really important for login check but maybe safer?
       if (message.data.includes('JSESSIONID')) {
-        // Logged in, redirect to info page
-        setLoggedIn(true)
+        // Logged in
+        setCookieSent(true)
         webview.current.stopLoading()
-        redirect(INFO_PAGE)
+        props.onSuccessfulCookie(message.data.replace('JSESSIONID=', ''))
       }
-    } else if (message.type === 'info') {
-      // Set App.js state
-      props.onInfoParsed(message.data)
     }
   }
 
