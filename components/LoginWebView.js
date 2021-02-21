@@ -4,13 +4,12 @@ import { WebView } from 'react-native-webview'
 const LOGIN_PAGE = 'https://oas.fh-erfurt.de/IDM/jsps/login/Login.jsf'
 
 // Seems to be constant
-// If not, we could find it: Value of 'Primary Role DN' key in table
+// If not, we could find it: Value of 'Primary Role DN' key in table like following
 /*
-// TODO: Check old js compatibility
+// TODO: Check old webview compatibility or just use old js syntax
 const neighborEl = [...document.querySelectorAll('td')].find(el => el.textContent === 'Primary Role DN:')
 const url = neighborEl.nextElementSibling.querySelector('a').href // javascript:code type url
 */
-// const INFO_PAGE = 'https://oas.fh-erfurt.de/IDM/portal/portlet/Selbstauskunft?urlType=Render&novl-regid=Selbstauskunft&novl-inst=IDM.Selbstauskunft&wsrp-mode=view&wsrp-windowstate=normal&MODE=MODE_VIEW&ENTITY_DEFINITION=organizationalRole&value-position=0&CN=cn%3Db80adac4-6ca8-4d72-9964-433322c128cd%2Cou%3Drole%2Co%3Duni'
 
 // URL after successful login:
 // https://oas.fh-erfurt.de/IDM/portal/cn/DefaultContainerPage/SelfService

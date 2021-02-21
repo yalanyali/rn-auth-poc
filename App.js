@@ -8,6 +8,8 @@ import * as Keychain from 'react-native-keychain'
 
 import LoginWebView from './components/LoginWebView'
 
+const API_BASE_URL = 'https://auth-test.loca.lt/auth'
+
 const CREDENTIAL_NAMESPACE = 'ACCESS_TOKEN'
 
 const saveAccessToken = (tokenString) => {
@@ -29,7 +31,7 @@ const App = () => {
   const sendCookie = async (cookieString) => {
     console.log('Sending token:', cookieString)
     try {
-      const req = await fetch('https://beb1c114c93f.eu.ngrok.io/auth/token', {
+      const req = await fetch(`${API_BASE_URL}/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -53,7 +55,7 @@ const App = () => {
 
   const accessResource = async (token) => {
     try {
-      const req = await fetch('https://beb1c114c93f.eu.ngrok.io/auth/access', {
+      const req = await fetch(`${API_BASE_URL}/access`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -107,7 +109,7 @@ const App = () => {
       <View style={styles.separator} />
       <View>
         <Text style={styles.title}>
-        Access token is saved to the native sacure keychain after a successful login attempt. To verify the effect of the saved token, you can clear any saved tokens.
+        Access token is saved to the native secure keychain after a successful login attempt. To verify the effect of the saved token, you can clear any saved tokens.
         </Text>
         <Button
           title='Clear Token'
